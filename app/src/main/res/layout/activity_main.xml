@@ -161,7 +161,7 @@
                 android:layout_height="72dp"
                 app:cornerRadius="36dp"
                 style="@style/Widget.MaterialComponents.ExtendedFloatingActionButton"
-                android:text="x"
+                android:text="*"
                 android:textSize="32dp"
                 android:layout_margin="12dp"
                 android:textColor="@color/white"
