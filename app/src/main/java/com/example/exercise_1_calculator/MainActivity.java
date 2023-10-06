@@ -14,7 +14,7 @@ import org.mozilla.javascript.Scriptable;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
-    TextView resultTv,solutionTv;
+    TextView resultTv,expressionTV;
     MaterialButton buttonC,buttonBrackOpen,buttonBrackClose;
     MaterialButton buttonDivide,buttonMultiply,buttonPlus,buttonMinus,buttonEquals;
     MaterialButton button0,button1,button2,button3,button4,button5,button6,button7,button8,button9;
@@ -26,7 +26,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         resultTv = findViewById(R.id.result_tv);
-        solutionTv = findViewById(R.id.solution_tv);
+        expressionTV= findViewById(R.id.expression_TV);
+
 
         assignId(buttonC,R.id.button_C);
         assignId(buttonBrackOpen,R.id.button_open_bracket);
@@ -54,74 +55,86 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn = findViewById(id);
         btn.setOnClickListener(this);
     }
-
-
     @Override
     public void onClick(View view) {
         MaterialButton button = (MaterialButton) view;
         String buttonText = button.getText().toString();
-        String dataToCalculate = solutionTv.getText().toString();
+        String dataToCalculate = expressionTV.getText().toString();
+
 
         if (buttonText.equals("AC")) {
-            solutionTv.setText("0");
+            expressionTV.setText("");
             resultTv.setText("0");
             return;
         }
         if (buttonText.equals("=")) {
             // Only update resultTv when "=" is pressed.
             String result = getResult(dataToCalculate);
-
-            if (!result.equals("Err")) {
-                resultTv.setText(result);
-                solutionTv.setText(result); // Set solutionTv to the result as well.
-            }
+            resultTv.setText(result);
+            expressionTV.setText(result);
             return;
         }
+        // 0/0 not a number
         if (buttonText.equals("C")) {
             if (!dataToCalculate.isEmpty()) {
                 dataToCalculate = dataToCalculate.substring(0, dataToCalculate.length() - 1);
             }
-        }
-        else {
-            // Check if the current text starts with "0" and remove the leading "0" if necessary.
-            if (dataToCalculate.equals("0")) {
-                dataToCalculate = buttonText;
-            } else {
-                dataToCalculate = dataToCalculate + buttonText;
+        } else if (buttonText.equals(".")) {
+            // Handle decimal point input
+            if (!dataToCalculate.endsWith(".")) {
+                // If expression does not already end with a decimal point, append it
+                dataToCalculate += buttonText;
             }
-        }
-        solutionTv.setText(dataToCalculate);
 
-//        // Check if dataToCalculate is empty before attempting evaluation.
-//        if (!dataToCalculate.isEmpty()) {
-//
-//
-////            String finalResult = getResult(dataToCalculate);
-////
-////            if (!finalResult.equals("Err")) {
-////                resultTv.setText(finalResult);
-////            }
-//        }
-        if(dataToCalculate.isEmpty()) {
+        } else if (buttonText.equals("0")) {
+            // Handle zero input
+            if (!dataToCalculate.equals("0")) {
+                // If expression is not just "0", append the zero
+                dataToCalculate += buttonText;
+            }
+        } else {
+            dataToCalculate += buttonText;
+        }
+
+        expressionTV.setText(dataToCalculate);
+
+        if (dataToCalculate.isEmpty()) {
             // If dataToCalculate is empty, set resultTv to "0".
-            solutionTv.setText("0");
+            expressionTV.setText("");
             resultTv.setText("0");
         }
     }
 
+    // Inside getResult method
+    String getResult(String data) {
+        try {
+            // Handle division by zero
+            if (data.contains("/")) {
+                String[] parts = data.split("/");
+                double numerator = Double.parseDouble(parts[0]);
+                double denominator = Double.parseDouble(parts[1]);
 
-    String getResult(String data){
-        try{
-            Context context  = Context.enter();
+                if (denominator == 0) {
+                    // Check for 0/0 and display "Not a number"
+                    if (numerator == 0) {
+                        return "Not a number";
+                    } else {
+                        return "Cannot divide by zero";
+                    }
+                }
+            }
+
+            Context context = Context.enter();
             context.setOptimizationLevel(-1);
             Scriptable scriptable = context.initStandardObjects();
-            String finalResult =  context.evaluateString(scriptable,data,"Javascript",1,null).toString();
-            if(finalResult.endsWith(".0")){
-                finalResult = finalResult.replace(".0","");
+            String finalResult = context.evaluateString(scriptable, data, "Javascript", 1, null).toString();
+            if (finalResult.endsWith(".0")) {
+                finalResult = finalResult.replace(".0", "");
             }
+
             return finalResult;
-        }catch (Exception e){
-            return "Err";
+        } catch (Exception e) {
+            return "Error: Invalid expression";
         }
     }
 
