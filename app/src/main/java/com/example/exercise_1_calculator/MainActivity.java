@@ -20,7 +20,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     MaterialButton button0,button1,button2,button3,button4,button5,button6,button7,button8,button9;
     MaterialButton buttonAC,buttonDot;
 
-
+    private String previousResult = "";
+    private String currentExpression = "";
+    private boolean isNewCalculation = true;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,24 +57,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn = findViewById(id);
         btn.setOnClickListener(this);
     }
+
     @Override
     public void onClick(View view) {
         MaterialButton button = (MaterialButton) view;
         String buttonText = button.getText().toString();
         String dataToCalculate = expressionTV.getText().toString();
 
-
         if (buttonText.equals("AC")) {
             expressionTV.setText("");
             resultTv.setText("0");
+            isNewCalculation = true;
             return;
         }
+
         if (buttonText.equals("=")) {
-            // Only update resultTv when "=" is pressed.
+            // Evaluate the expression
             String result = getResult(dataToCalculate);
             resultTv.setText(result);
-            expressionTV.setText(result);
+
+            previousResult = result;
+            isNewCalculation = true;
             return;
+        }
+
+        // Handle number and operator button clicks
+        if (isNewCalculation) {
+            // If it's a new calculation, clear the expression TextView
+            dataToCalculate = "";
+            isNewCalculation = false;
         }
         // 0/0 not a number
         if (buttonText.equals("C")) {
@@ -85,15 +98,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 // If expression does not already end with a decimal point, append it
                 dataToCalculate += buttonText;
             }
-
-        } else if (buttonText.equals("0")) {
-            // Handle zero input
-            if (!dataToCalculate.equals("0")) {
-                // If expression is not just "0", append the zero
-                dataToCalculate += buttonText;
-            }
-        } else {
+        } else if (buttonText.matches("[0-9]")) {
+            // Handle digit input
             dataToCalculate += buttonText;
+            resultTv.setText("0");
+            previousResult = "";
+        } else {
+            // Handle operator input
+            dataToCalculate += previousResult + buttonText  ;
         }
 
         expressionTV.setText(dataToCalculate);
@@ -104,7 +116,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             resultTv.setText("0");
         }
     }
-
     // Inside getResult method
     String getResult(String data) {
         try {
@@ -131,7 +142,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (finalResult.endsWith(".0")) {
                 finalResult = finalResult.replace(".0", "");
             }
-
             return finalResult;
         } catch (Exception e) {
             return "Error: Invalid expression";
